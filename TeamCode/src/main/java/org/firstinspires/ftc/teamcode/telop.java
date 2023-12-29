@@ -20,8 +20,6 @@ public abstract class telop extends OpMode{
 
         telemetry.addData("Say", "Hello Drive");
 
-        waitForStart();
-
         while (opModeIsActive()) {
             double turn = (gamepad1.right_trigger - gamepad1.left_trigger) * .5;
 
