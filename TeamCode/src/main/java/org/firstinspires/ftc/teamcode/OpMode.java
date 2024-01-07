@@ -14,6 +14,7 @@ import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.motors.GoBILDA5202Series;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -21,6 +22,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -28,17 +30,25 @@ import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
-import org.openftc.easyopencv.OpenCvWebcam;
+import org.openftc.easyopencv.OpenCvWebcam;import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
 public abstract class OpMode extends LinearOpMode {
 
     protected TouchSensor touch;
+    protected CRServo LeftServo, RightServo;
     public DcMotorEx EncoderLeft,EncoderRight,EncoderCenter;
-    protected DcMotorEx DriveFrontLeft, DriveFrontRight, DriveBackLeft, DriveBackRight, arm1, arm2, intake,intake2, ANGLE;
+    protected DcMotorEx DriveFrontLeft, DriveFrontRight, DriveBackLeft, DriveBackRight, armR, armL, intake, ANGLE;
     protected ElapsedTime runtime = new ElapsedTime();
     protected float gyroCalibration = 0;
     protected BNO055IMU imu;
@@ -54,62 +64,37 @@ public abstract class OpMode extends LinearOpMode {
         DriveFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         DriveBackLeft = hardwareMap.get(DcMotorEx.class, "BL");
-        DriveBackLeft.setDirection(DcMotor.Direction.REVERSE);
+        DriveBackLeft.setDirection(DcMotor.Direction.FORWARD);
         DriveBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         DriveBackRight = hardwareMap.get(DcMotorEx.class, "BR");
-        DriveBackRight.setDirection(DcMotor.Direction.FORWARD);
+        DriveBackRight.setDirection(DcMotor.Direction.REVERSE);
         DriveBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        arm1 = hardwareMap.get(DcMotorEx.class,"ELEVATOR R");
-        arm1.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        arm1.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        arm1.setDirection(DcMotorEx.Direction.REVERSE);
-        arm1.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        armR = hardwareMap.get(DcMotorEx.class,"ELEVATOR R");
+        armR.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        armR.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armR.setDirection(DcMotorEx.Direction.FORWARD);
+        armR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
-        arm2 = hardwareMap.get(DcMotorEx.class,"ELEVATOR L");
-        arm2.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        arm2.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
-        arm2.setDirection(DcMotorEx.Direction.FORWARD);
-        arm2.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        armL = hardwareMap.get(DcMotorEx.class,"ELEVATOR L");
+        armL.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        armL.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        armL.setDirection(DcMotorEx.Direction.FORWARD);
+        armL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         intake = hardwareMap.get(DcMotorEx.class,"WHEELS");
         intake.setDirection(DcMotorEx.Direction.REVERSE);
         intake.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
-        intake2 = hardwareMap.get(DcMotorEx.class,"WHEELS");
-        intake2.setDirection(DcMotorEx.Direction.REVERSE);
-        intake2.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-
         ANGLE = hardwareMap.get(DcMotorEx.class,"ANGLE");
         ANGLE.setDirection(DcMotorEx.Direction.FORWARD);
         ANGLE.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
-       /* EncoderLeft = hardwareMap.get(DcMotorEx.class,"LeftEncoder");
-        EncoderLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        EncoderLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        LeftServo = hardwareMap.get(CRServo.class, "Left Servo");
+        RightServo = hardwareMap.get(CRServo.class, "Right Servo");
 
-        EncoderRight = hardwareMap.get(DcMotorEx.class,"RightEncoder");
-        EncoderRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        EncoderRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        EncoderCenter = hardwareMap.get(DcMotorEx.class,"CenterEncoder");
-        EncoderCenter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        EncoderCenter.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-       */
         touch = hardwareMap.get(TouchSensor.class, "touch");
-
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.mode = BNO055IMU.SensorMode.IMU;
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.loggingEnabled = false;
-        parameters.gyroPowerMode = BNO055IMU.GyroPowerMode.FAST;
-        parameters.gyroRange = BNO055IMU.GyroRange.DPS2000;
-        imu.initialize(parameters);
-
-        calibrateGyro();
 
         telemetry.addLine("Waiting for start");
         telemetry.update();
@@ -137,125 +122,36 @@ public abstract class OpMode extends LinearOpMode {
 
     protected abstract void end();
 
-    float getGyro() {
-        return (imu.getAngularOrientation(EXTRINSIC, XYZ, AngleUnit.DEGREES).thirdAngle - gyroCalibration + 180) % 360 - 180;
+    public void power(double speed){
+        DriveFrontLeft.setPower(speed);
+        DriveFrontRight.setPower(-speed);
+        DriveBackLeft.setPower(speed);
+        DriveBackRight.setPower(-speed);
     }
 
-    void calibrateGyro() {
-        gyroCalibration = (imu.getAngularOrientation().firstAngle + 180) % 360 - 180;
-    }
-    private float normalizeAngle(float angle) {
-        return (angle + 540) % 360 - 180;
-    }
+    public void Roni(double y, double x, double rx, double botHeading){
 
-    void move(double pow, double turn, boolean isDrift) {
-        double frontLeftPower, frontRightPower, backRightPower, backLeftPower;
-        if (isDrift) {
-            backLeftPower = frontRightPower = Range.clip(pow + turn, -1.0, 1.0);
-            backRightPower = frontLeftPower = Range.clip(pow - turn, -1.0, 1.0);
-        } else {
-            backLeftPower = frontLeftPower = Range.clip(pow + turn, -1.0, 1.0);
-            backRightPower = frontRightPower = Range.clip(pow - turn, -1.0, 1.0);
-        }
+        // Rotate the movement direction counter to the bot's rotation
+        double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+        double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
 
-        DriveFrontRight.setPower(frontRightPower);
-        DriveBackRight.setPower(backRightPower);
+        rotX = rotX * 1.1;  // Counteract imperfect strafing
+
+        // Denominator is the largest motor power (absolute value) or 1
+        // This ensures all the powers maintain the same ratio,
+        // but only if at least one is out of the range [-1, 1]
+        double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+        double frontLeftPower = (rotY + rotX + rx) / denominator;
+        double backLeftPower = (rotY - rotX + rx) / denominator;
+        double frontRightPower = (rotY - rotX - rx) / denominator;
+        double backRightPower = (rotY + rotX - rx) / denominator;
+
         DriveFrontLeft.setPower(frontLeftPower);
         DriveBackLeft.setPower(backLeftPower);
-    }
-
-    final protected void moveFreeWithGyro(double x, double y, double turn) {
-        double pow, drift, virtualAngle, powToDriftRatio, realAngle, d = sqrt(x * x + y * y);
-        double frontRightPower, frontLeftPower, backLeftPower, backRightPower;
-
-        x = -x;
-
-        if (x == 0) {
-            realAngle = y > 0 ? 90 : -90;
-        } else if (y == 0) {
-            realAngle = x > 0 ? 0 : 180;
-        } else {
-            realAngle = toDegrees(atan(y / x));
-            if (x < 0) {
-                realAngle = 180 + realAngle;
-            }
-        }
-        virtualAngle = realAngle - getGyro() - 180;
-
-        virtualAngle = (virtualAngle + 360) % 360;
-
-        powToDriftRatio = tan(toRadians(virtualAngle));
-
-        drift = d / sqrt(powToDriftRatio * powToDriftRatio + 1);
-        pow = drift * powToDriftRatio;
-
-        // distinguish between both solutions to our equations
-        if (virtualAngle > 90 && virtualAngle <= 270) {
-            pow = -pow;
-        } else {
-            drift = -drift;
-        }
-
-        backLeftPower = frontRightPower = pow + drift;
-        backRightPower = frontLeftPower = pow - drift;
-        frontRightPower = Range.clip(frontRightPower - turn, -1, 1);
-        backRightPower = Range.clip(backRightPower - turn, -1, 1);
-        frontLeftPower = Range.clip(frontLeftPower + turn, -1, 1);
-        backLeftPower = Range.clip(backLeftPower + turn, -1, 1);
-
         DriveFrontRight.setPower(frontRightPower);
         DriveBackRight.setPower(backRightPower);
-        DriveFrontLeft.setPower(frontLeftPower);
-        DriveBackLeft.setPower(backLeftPower);
     }
-    final protected void lockedAngleMoveFreeWithGyro(double x, double y, float angle) {
-        double pow, drift, virtualAngle, powToDriftRatio, realAngle, d = sqrt(x * x + y * y);
-        double frontRightPower, frontLeftPower, backLeftPower, backRightPower;
 
-        x = -x;
-
-        if (x == 0) {
-            realAngle = y > 0 ? 90 : -90;
-        } else if (y == 0) {
-            realAngle = x > 0 ? 0 : 180;
-        } else {
-            realAngle = toDegrees(atan(y / x));
-            if (x < 0) {
-                realAngle = 180 + realAngle;
-            }
-        }
-
-        virtualAngle = realAngle - getGyro() - 180;
-
-        virtualAngle = (virtualAngle + 360) % 360;
-
-        powToDriftRatio = tan(toRadians(virtualAngle));
-
-        drift = d / sqrt(powToDriftRatio * powToDriftRatio + 1);
-        pow = drift * powToDriftRatio;
-
-        // distinguish between both solutions to our equations
-        if (virtualAngle > 90 && virtualAngle <= 270) {
-            pow = -pow;
-        } else {
-            drift = -drift;
-        }
-
-        backLeftPower = frontRightPower = pow + drift;
-        backRightPower = frontLeftPower = pow - drift;
-
-        double s = normalizeAngle((getGyro() - angle)) / 100d;
-
-        frontRightPower = Range.clip(frontRightPower - s, -1, 1);
-        backRightPower = Range.clip(backRightPower - s, -1, 1);
-        frontLeftPower = Range.clip(frontLeftPower + s, -1, 1);
-        backLeftPower = Range.clip(backLeftPower + s, -1, 1);
-
-        DriveFrontRight.setPower(frontRightPower);
-        DriveBackRight.setPower(backRightPower);
-        DriveFrontLeft.setPower(frontLeftPower);
-        DriveBackLeft.setPower(backLeftPower);
-    }
 /*
     public void odomatry(){
         //distance between n1 & n2
