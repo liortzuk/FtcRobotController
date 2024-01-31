@@ -24,6 +24,19 @@ android {
 }
 
 dependencies {
+    implementation 'org.firstinspires.ftc:Inspection:9.0.1'
+    implementation 'org.firstinspires.ftc:Blocks:9.0.1'
+    implementation 'org.firstinspires.ftc:Tfod:9.0.1'
+    implementation 'org.firstinspires.ftc:RobotCore:9.0.1'
+    implementation 'org.firstinspires.ftc:RobotServer:9.0.1'
+    implementation 'org.firstinspires.ftc:OnBotJava:9.0.1'
+    implementation 'org.firstinspires.ftc:Hardware:9.0.1'
+    implementation 'org.firstinspires.ftc:FtcCommon:9.0.1'
+    implementation 'androidx.appcompat:appcompat:1.5.1'
+
     implementation project(':FtcRobotController')
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
+    implementation 'org.openftc:apriltag:2.0.0'
+    implementation 'com.acmerobotics.dashboard:dashboard:0.4.6'
+
 }

@@ -1,18 +1,24 @@
 package org.firstinspires.ftc.teamcode;
 
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.XYZ;
+import static org.firstinspires.ftc.robotcore.external.navigation.AxesOrder.YXZ;
 import static org.firstinspires.ftc.robotcore.external.navigation.AxesReference.EXTRINSIC;
 import static java.lang.Math.PI;
+import static java.lang.Math.abs;
 import static java.lang.Math.asin;
 import static java.lang.Math.atan;
 import static java.lang.Math.sqrt;
 import static java.lang.Math.tan;
 import static java.lang.Math.toRadians;
 import static java.lang.StrictMath.toDegrees;
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 
 import android.util.Log;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
 import com.qualcomm.hardware.motors.GoBILDA5202Series;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -22,15 +28,24 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Axis;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.teamcode.OpenCV.AprilTagDetectionPipeline;
+import org.firstinspires.ftc.teamcode.OpenCV.Belman_camera;
+import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
@@ -42,45 +57,67 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.teamcode.PID;
+
+import java.util.ArrayList;
+
 
 public abstract class OpMode extends LinearOpMode {
 
     protected TouchSensor touch;
     protected CRServo LeftServo, RightServo;
-    public DcMotorEx EncoderLeft,EncoderRight,EncoderCenter;
     protected DcMotorEx DriveFrontLeft, DriveFrontRight, DriveBackLeft, DriveBackRight, armR, armL, intake, ANGLE;
     protected ElapsedTime runtime = new ElapsedTime();
     protected float gyroCalibration = 0;
     protected BNO055IMU imu;
 
+    public DriveTrain drivetrain;
+    FtcDashboard dashboard;
+
     void initialize() {
+        Side side;
 
         DriveFrontLeft = hardwareMap.get(DcMotorEx.class, "FL");
         DriveFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         DriveFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        DriveFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveFrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         DriveFrontRight = hardwareMap.get(DcMotorEx.class, "FR");
         DriveFrontRight.setDirection(DcMotor.Direction.REVERSE);
         DriveFrontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        DriveFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveFrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         DriveBackLeft = hardwareMap.get(DcMotorEx.class, "BL");
         DriveBackLeft.setDirection(DcMotor.Direction.FORWARD);
         DriveBackLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        DriveBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveBackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         DriveBackRight = hardwareMap.get(DcMotorEx.class, "BR");
         DriveBackRight.setDirection(DcMotor.Direction.REVERSE);
         DriveBackRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        DriveBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveBackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         armR = hardwareMap.get(DcMotorEx.class,"ELEVATOR R");
-        armR.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        armR.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         armR.setDirection(DcMotorEx.Direction.FORWARD);
+        armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armR.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         armL = hardwareMap.get(DcMotorEx.class,"ELEVATOR L");
-        armL.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        armL.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         armL.setDirection(DcMotorEx.Direction.FORWARD);
+        armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         armL.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         intake = hardwareMap.get(DcMotorEx.class,"WHEELS");
@@ -94,11 +131,25 @@ public abstract class OpMode extends LinearOpMode {
         LeftServo = hardwareMap.get(CRServo.class, "Left Servo");
         RightServo = hardwareMap.get(CRServo.class, "Right Servo");
 
-        touch = hardwareMap.get(TouchSensor.class, "touch");
+      //  touch = hardwareMap.get(TouchSensor.class, "touch");
+
+
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
+        parameters.loggingEnabled = true;
+        parameters.loggingTag = "imu";
+        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+
 
         telemetry.addLine("Waiting for start");
         telemetry.update();
 
+       // Find();
 
     }
 
@@ -108,6 +159,10 @@ public abstract class OpMode extends LinearOpMode {
         initialize();
         waitForStart();
         postInit();
+
+        dashboard = FtcDashboard.getInstance();
+        drivetrain = new DriveTrain(DriveBackRight, DriveBackLeft, DriveFrontRight, DriveFrontLeft, telemetry, imu, this);
+
         if (opModeIsActive()) {
             run();
         }
@@ -122,20 +177,13 @@ public abstract class OpMode extends LinearOpMode {
 
     protected abstract void end();
 
-    public void power(double speed){
-        DriveFrontLeft.setPower(speed);
-        DriveFrontRight.setPower(-speed);
-        DriveBackLeft.setPower(speed);
-        DriveBackRight.setPower(-speed);
-    }
-
     public void Roni(double y, double x, double rx, double botHeading){
 
         // Rotate the movement direction counter to the bot's rotation
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
 
-        rotX = rotX * 1.1;  // Counteract imperfect strafing
+        rotX *= 1.1;  // Counteract imperfect strafing
 
         // Denominator is the largest motor power (absolute value) or 1
         // This ensures all the powers maintain the same ratio,
@@ -152,34 +200,58 @@ public abstract class OpMode extends LinearOpMode {
         DriveBackRight.setPower(backRightPower);
     }
 
-/*
-    public void odomatry(){
-        //distance between n1 & n2
-        double L =0;
-        // distance between n1, n2 & n3
-        double B =0;
-        //wheel radius
-        double R =0;
-        //ticks per rev
-        double N =0;
-        //cm per ticks
-        double cm_per_ticks = 2.0*Math.PI*R/N;
+    public void Elevator(int Right_Target, int Left_Target,double PowerR, double PowerL){
 
-        double x =0;
-        double y = 0;
-        double x1 = 0;
-        double y1 = 0;
-        // x distance traveled
-        double s1 = cm_per_ticks*(EncoderLeft.getCurrentPosition()+EncoderRight.getCurrentPosition())/2;
-        //feida
-        double s2 = cm_per_ticks*(EncoderRight.getCurrentPosition()- EncoderLeft.getCurrentPosition())/2;
-        // y distance traveled
-        double s3 = cm_per_ticks*(EncoderCenter.getCurrentPosition()-B*EncoderRight.getCurrentPosition()-EncoderLeft.getCurrentPosition()/L);
+        armR.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armL.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        //field x
-        x1 = x +s1*Math.cos(s2)-s3*Math.sin(s2);
-        // field y
-        y1 = y + s1*Math.sin(s2)- s3*Math.cos(s2);
+        armR.setTargetPosition(Right_Target);
+        armL.setTargetPosition(Left_Target);
+
+        armR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+        while (opModeIsActive()  && armL.isBusy() && armR.isBusy()){
+            armR.setPower(PowerR);
+            armL.setPower(PowerL);
+        }
+        armR.setPower(0);
+        armL.setPower(0);
+
+
     }
- */
+
+    public void AngleLift(int position, double power){
+        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ANGLE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        ANGLE.setTargetPosition(position);
+        ANGLE.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        ANGLE.setPower(power);
+
+
+        while (opModeIsActive() && ANGLE.isBusy()){
+            idle();
+        }
+
+
+    }
+    public void IntakePower(int position, double power){
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        intake.setTargetPosition(position);
+        intake.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        intake.setPower(power);
+
+        while (opModeIsActive()  && intake.isBusy()){
+            LeftServo.setPower(-.15);
+            RightServo.setPower(.15);
+        }
+
+    }
+    public void resetAngle(){
+        gyroCalibration = (imu.getAngularOrientation().firstAngle + 180) % 360 - 180;
+    }
 }

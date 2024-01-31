@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.OpenCV;
 
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -65,7 +65,7 @@ public class opencv extends LinearOpMode {
 
         // Use OpenCvCameraFactory class from FTC SDK to create camera instance
         controlHubCam = OpenCvCameraFactory.getInstance().createWebcam(
-                hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+                hardwareMap.get(WebcamName.class, "cum"), cameraMonitorViewId);
 
         controlHubCam.setPipeline(new YellowBlobDetectionPipeline());
 
