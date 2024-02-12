@@ -1,4 +1,3 @@
-
 package org.firstinspires.ftc.teamcode.OpenCV;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -9,15 +8,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-import org.firstinspires.ftc.teamcode.OpMode;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
 import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.openftc.easyopencv.OpenCvInternalCamera;
 
 import java.util.ArrayList;
-public class Belman extends OpMode {
 
+public class BelmanDetection extends LinearOpMode
+{
     OpenCvCamera camera;
     AprilTagDetectionPipeline aprilTagDetectionPipeline;
 
@@ -35,20 +35,12 @@ public class Belman extends OpMode {
     // UNITS ARE METERS
     double tagsize = 0.166;
 
-    // Tag of codes
-    int Left = 0;
-    int Center = 1;
-    int Right = 2;
-
-    int Left2 = 3;
-    int Center2 = 4;
-    int Right2 = 5;
-
+    int ID_TAG_OF_INTEREST = 18; // Tag ID 18 from the 36h11 family
 
     AprilTagDetection tagOfInterest = null;
 
-
-    public void Find()
+    @Override
+    public void runOpMode()
     {
         int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
         camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "cum"), cameraMonitorViewId);
@@ -76,7 +68,7 @@ public class Belman extends OpMode {
          * The INIT-loop:
          * This REPLACES waitForStart!
          */
-        while (!isStarted() && !isStopRequested() || opModeIsActive())
+        while (!isStarted() && !isStopRequested())
         {
             ArrayList<AprilTagDetection> currentDetections = aprilTagDetectionPipeline.getLatestDetections();
 
@@ -86,7 +78,7 @@ public class Belman extends OpMode {
 
                 for(AprilTagDetection tag : currentDetections)
                 {
-                    if(tag.id == Left || tag.id == Center || tag.id == Right || tag.id == Left2 || tag.id == Center2 || tag.id == Right2)
+                    if(tag.id == ID_TAG_OF_INTEREST)
                     {
                         tagOfInterest = tag;
                         tagFound = true;
@@ -98,7 +90,6 @@ public class Belman extends OpMode {
                 {
                     telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
                     tagToTelemetry(tagOfInterest);
-
                 }
                 else
                 {
@@ -133,6 +124,7 @@ public class Belman extends OpMode {
             }
 
             telemetry.update();
+            sleep(20);
         }
 
         /*
@@ -153,22 +145,41 @@ public class Belman extends OpMode {
             telemetry.update();
         }
 
-        if(tagOfInterest.id == Left2|| tagOfInterest.id == Left){
+        /* Actually do something useful */
+        if(tagOfInterest == null)
+        {
+            /*
+             * Insert your autonomous code here, presumably running some default configuration
+             * since the tag was never sighted during INIT
+             */
+        }
+        else
+        {
+            /*
+             * Insert your autonomous code here, probably using the tag pose to decide your configuration.
+             */
 
+            // e.g.
+            if(tagOfInterest.pose.x <= 20)
+            {
+                // do something
+            }
+            else if(tagOfInterest.pose.x >= 20 && tagOfInterest.pose.x <= 50)
+            {
+                // do something else
+            }
+            else if(tagOfInterest.pose.x >= 50)
+            {
+                // do something else
+            }
         }
 
-        if(tagOfInterest.id == Center2|| tagOfInterest.id == Center){
 
-        }
-        if(tagOfInterest.id == Right2|| tagOfInterest.id == Right){
-
-        }
-        if(tagOfInterest == null){
-
-        }
+        /* You wouldn't have this in your autonomous, this is just to prevent the sample from ending */
+        while (opModeIsActive()) {sleep(20);}
     }
 
-    public void tagToTelemetry(AprilTagDetection detection)
+    void tagToTelemetry(AprilTagDetection detection)
     {
         Orientation rot = Orientation.getOrientation(detection.pose.R, AxesReference.INTRINSIC, AxesOrder.YXZ, AngleUnit.DEGREES);
 
@@ -179,15 +190,5 @@ public class Belman extends OpMode {
         telemetry.addLine(String.format("Rotation Yaw: %.2f degrees", rot.firstAngle));
         telemetry.addLine(String.format("Rotation Pitch: %.2f degrees", rot.secondAngle));
         telemetry.addLine(String.format("Rotation Roll: %.2f degrees", rot.thirdAngle));
-    }
-
-    @Override
-    protected void run() {
-
-    }
-
-    @Override
-    protected void end() {
-
     }
 }
