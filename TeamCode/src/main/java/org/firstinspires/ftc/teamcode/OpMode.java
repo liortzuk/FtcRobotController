@@ -16,6 +16,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 
 import android.util.Log;
+import android.util.Size;
 
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.bosch.JustLoggingAccelerationIntegrator;
@@ -36,6 +37,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -43,8 +45,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Axis;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
 import org.firstinspires.ftc.teamcode.OpenCV.AprilTagDetectionPipeline;
 import org.firstinspires.ftc.teamcode.OpenCV.Belman_camera;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
 import org.openftc.apriltag.AprilTagDetection;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -67,6 +72,17 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PID;
 
 import java.util.ArrayList;
+import java.util.List;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.tfod.Recognition;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+
+import java.util.List;
 
 
 public abstract class OpMode extends LinearOpMode {
@@ -82,6 +98,13 @@ public abstract class OpMode extends LinearOpMode {
     protected IMU Imu;
     public DriveTrain drivetrain;
     FtcDashboard dashboard;
+
+    private TfodProcessor tfod;
+
+    /**
+     * The variable to store our instance of the vision portal.
+     */
+    private VisionPortal visionPortal;
 
     void initialize() {
         Side side;
@@ -136,26 +159,13 @@ public abstract class OpMode extends LinearOpMode {
         angle = hardwareMap.get(Servo.class, "angle");
         trigger = hardwareMap.get(Servo.class, "trigger");
 
-        angle.setPosition(0.5);
-        trigger.setPosition(0.5);
 
-        initCam();
+        //initCam();
+        //initTfod();
 
       //  touch = hardwareMap.get(TouchSensor.class, "touch");
 
-/*
-        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-        parameters.calibrationDataFile = "BNO055IMUCalibration.json";
-        parameters.loggingEnabled = true;
-        parameters.loggingTag = "imu";
-        parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
 
-        imu = hardwareMap.get(BNO055IMU.class, "imu");
-        imu.initialize(parameters);
-
- */
 
         // Retrieve the IMU from the hardware map
         Imu = hardwareMap.get(IMU.class, "imu");
@@ -169,10 +179,6 @@ public abstract class OpMode extends LinearOpMode {
         Imu.resetYaw();
 
        // Find();
-
-        telemetry.addData("trigger:", trigger.getPosition());
-        telemetry.addData("angle:", angle.getPosition());
-        telemetry.update();
 
     }
 
@@ -261,6 +267,37 @@ public abstract class OpMode extends LinearOpMode {
         }
     }
 
+    public void Elevator2(double position){
+
+        double positionWanted = position;
+        PID pid = new PID(0.01, 0, 0, 0, 0);
+
+
+        if (position > armL.getCurrentPosition()) {
+            while (position > armL.getCurrentPosition()) {
+                pid.setWanted(position);
+                armR.setPower(pid.update(armL.getCurrentPosition()));
+                armL.setPower(pid.update(armL.getCurrentPosition()));
+                // positionWanted = position - Math.abs(armL.getCurrentPosition());
+                telemetry.addData("hi", armL.getPower());
+                telemetry.update();
+            }
+            armR.setPower(0);
+            armL.setPower(0);
+           }else if (position < armL.getCurrentPosition()){
+              double wantedSpeed = armL.getCurrentPosition();
+              positionWanted = wantedSpeed;
+              while (position < armL.getCurrentPosition()){
+              pid.setWanted(position);
+              armR.setPower(pid.update(armL.getCurrentPosition()));
+              armL.setPower(pid.update(armL.getCurrentPosition()));
+
+           }
+            armR.setPower(0);
+            armL.setPower(0);
+        }
+    }
+
     public void AngleLift(int position, double power){
         ANGLE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         ANGLE.setTargetPosition(position);
@@ -268,7 +305,7 @@ public abstract class OpMode extends LinearOpMode {
 
         while (opModeIsActive() && ANGLE.isBusy()){
             ANGLE.setPower(power);
-            idle();
+
         }
         ANGLE.setPower(0);
         ANGLE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -284,15 +321,23 @@ public abstract class OpMode extends LinearOpMode {
 
         while (opModeIsActive()  && intake.isBusy()){
             intake.setPower(power);
-            LeftServo.setPower(1);
-            RightServo.setPower(-1);
-            idle();
+           // LeftServo.setPower(1);
+           // RightServo.setPower(-1);
+
         }
         LeftServo.setPower(0);
         RightServo.setPower(0);
         intake.setPower(0);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
     }
+
+    public double xPosition_red;
+    public double yPosition_red;
+    public double xPosition_blue;
+    public double yPosition_blue;
+
+    public int left_middle_right_red = 2;
+    public int left_middle_right_blue = 2;
 
     public double X_Value = 0;
     public OpenCvCamera camera;
@@ -301,14 +346,9 @@ public abstract class OpMode extends LinearOpMode {
 
     public void initCam(){
 
-
-
-        final double FEET_PER_METER = 3.28084;
-
         // Lens intrinsics
         // UNITS ARE PIXELS
-        // NOTE: this calibration is for the C920 webcam at 800x448.
-        // You will need to do your own calibration for other configurations!
+        // Note:  this calibration is for the C921HD webcam at 1920x1080.
         double fx = 578.272;
         double fy = 578.272;
         double cx = 402.145;
@@ -372,10 +412,47 @@ public abstract class OpMode extends LinearOpMode {
 
                 if(tagFound)
                 {
+                    xPosition_red = 10 * tagOfInterest.pose.x;
+                    xPosition_red  = (int)xPosition_red  * 10;
+
+                    yPosition_red  = 10 * tagOfInterest.pose.y;
+                    yPosition_red  = (int)yPosition_red  * 10;
+
+                    //left
+                    if (Math.abs(xPosition_red ) > 90){
+                        left_middle_right_red  = 1;
+                    } else if (xPosition_red  < 0) {
+                        left_middle_right_red  = 3;
+                    } else {
+                        left_middle_right_red  = 2;
+                    }
+
+                    xPosition_blue = 10 * tagOfInterest.pose.x;
+                    xPosition_blue = (int)xPosition_blue * 10;
+
+                    yPosition_blue = 10 * tagOfInterest.pose.y;
+                    yPosition_blue = (int)yPosition_blue * 10;
+
+                    //left
+                    if (Math.abs(xPosition_blue) > 150){
+                        left_middle_right_blue = 3;
+                    } else if (xPosition_blue < 60) {
+                        left_middle_right_blue = 1;
+                    } else {
+                        left_middle_right_blue = 2;
+                    }
                     telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
                     tagToTelemetry(tagOfInterest);
-                    telemetry.addData("Y Axes: ", tagOfInterest.pose.y);
-                    telemetry.addData("X Axes: ", tagOfInterest.pose.x);
+                    telemetry.addData("Y Axes: ", yPosition_blue);
+                    telemetry.addData("X Axes: ", xPosition_blue);
+                    telemetry.addData("left center right: ", left_middle_right_blue);
+
+                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
+                    tagToTelemetry(tagOfInterest);
+                    telemetry.addData("Y Axes: ", yPosition_red);
+                    telemetry.addData("X Axes: ", xPosition_red);
+                    telemetry.addData("left center right: ", left_middle_right_red);
+                    telemetry.addLine("Tag of interest is in sight!\n\nLocation data:");
 
                     telemetry.update();
                 }
@@ -430,34 +507,59 @@ public abstract class OpMode extends LinearOpMode {
 
     public void turnToGyro(double degrees){
 
-        DriveFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        DriveFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        DriveBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        DriveBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        Imu.resetYaw();
 
-        double error = degrees;
-        PID_turn pid_turn = new PID_turn(error,0.2,0.01,0);
+        double error = degrees + Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+       // PID_turn pid_turn = new PID_turn(error,5,4,0);
 
-        while (Math.abs(error) > 2){
-            double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        PID pid = new PID(.5,.2,0,0,0);
 
-            DriveFrontLeft.setPower(-pid_turn.update(botAngle));
-            DriveFrontRight.setPower(pid_turn.update(botAngle));
 
-            DriveBackRight.setPower(pid_turn.update(botAngle));
-            DriveBackLeft.setPower(-pid_turn.update(botAngle));
 
-            error = degrees - botAngle;
+        if (degrees > 0) {
+            while (Math.abs(error) > 15) {
+                double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+
+                double ticks_per_cm = 537.6 / 9.6;
+
+                double wantedPose = ticks_per_cm*degrees;
+
+                DriveFrontLeft.setPower(-75);
+                DriveFrontRight.setPower(75);
+
+                DriveBackRight.setPower(75);
+                DriveBackLeft.setPower(-75);
+                error = degrees - botAngle;
+
+            }
+            DriveFrontLeft.setPower(0);
+            DriveFrontRight.setPower(0);
+            DriveBackRight.setPower(0);
+            DriveBackLeft.setPower(0);
+        }
+        else if (degrees < 0) {
+            while (error < -15) {
+                double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+
+
+                DriveFrontLeft.setPower(75);
+                DriveFrontRight.setPower(-75);
+
+                DriveBackRight.setPower(-.75);
+                DriveBackLeft.setPower(75);
+                error = degrees + botAngle;
+
+            }
+            DriveFrontLeft.setPower(0);
+            DriveFrontRight.setPower(0);
+            DriveBackRight.setPower(0);
+            DriveBackLeft.setPower(0);
 
         }
-        DriveFrontLeft.setPower(0);
-        DriveFrontRight.setPower(0);
-        DriveBackRight.setPower(0);
-        DriveBackLeft.setPower(0);
 
     }
 
-    public void driveTo(int cm){
+    public void driveTo(double cm){
         DriveFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DriveBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -477,7 +579,7 @@ public abstract class OpMode extends LinearOpMode {
         positionWanted = cm * ticks_per_cm;
         pid.setWanted((int)positionWanted);
 
-        while (positionWanted > Math.abs(DriveFrontLeft.getCurrentPosition()) + 2){
+        while (Math.abs(positionWanted)> Math.abs(DriveFrontLeft.getCurrentPosition()) + 2){
             DriveFrontLeft.setPower(pid.update(DriveFrontLeft.getCurrentPosition()) / 2);
             DriveBackLeft.setPower(pid.update(DriveFrontLeft.getCurrentPosition()) / 2);
 
@@ -496,6 +598,216 @@ public abstract class OpMode extends LinearOpMode {
         DriveFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         DriveBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+    }
+
+
+    public void SideWalk(double cm){
+        DriveFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveBackLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        DriveFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DriveBackRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        DriveFrontLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DriveBackLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        DriveFrontRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        DriveBackRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        double positionWanted = 0;
+        PID pid = new PID(0.5, 0.5, 0.2, 0, 0);
+
+        double ticks_per_cm = 537.6 / 9.6;
+        positionWanted = cm * ticks_per_cm;
+        pid.setWanted((int)positionWanted);
+
+        while (Math.abs(positionWanted) > Math.abs(DriveFrontLeft.getCurrentPosition())){
+            DriveFrontLeft.setPower(-pid.update(DriveFrontLeft.getCurrentPosition()));
+            DriveBackLeft.setPower(pid.update(DriveFrontLeft.getCurrentPosition()));
+
+            DriveFrontRight.setPower(-pid.update(DriveFrontLeft.getCurrentPosition()));
+            DriveBackRight.setPower(pid.update(DriveFrontLeft.getCurrentPosition()));
+        }
+
+        DriveFrontLeft.setPower(0);
+        DriveBackLeft.setPower(0);
+
+        DriveFrontRight.setPower(0);
+        DriveBackRight.setPower(0);
+
+        DriveFrontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        DriveBackLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        DriveFrontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        DriveBackRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+
+    public void initTfod() {
+
+
+        // Create the TensorFlow processor by using a builder.
+        tfod = new TfodProcessor.Builder()
+
+                // Use setModelAssetName() if the TF Model is built in as an asset.
+                // Use setModelFileName() if you have downloaded a custom team model to the Robot Controller.
+                //.setModelAssetName(TFOD_MODEL_ASSET)
+                //.setModelFileName(TFOD_MODEL_FILE)
+
+                //.setModelLabels()
+                //.setIsModelTensorFlow2(true)
+                //.setIsModelQuantized(true)
+                  .setModelInputSize(1000)
+                  .setModelAspectRatio(16.0 / 9.0)
+                .build();
+
+        // Create the vision portal by using a builder.
+        VisionPortal.Builder builder = new VisionPortal.Builder();
+        builder.setCamera(hardwareMap.get(WebcamName.class, "cum"));
+
+        // Choose a camera resolution. Not all cameras support all resolutions.
+        builder.setCameraResolution(new Size(1920,1080));
+
+        // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
+        //builder.enableCameraMonitoring(true);
+
+        // Set the stream format; MJPEG uses less bandwidth than default YUY2.
+        builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+        // Choose whether or not LiveView stops if no processors are enabled.
+        // If set "true", monitor shows solid orange screen if no processors enabled.
+        // If set "false", monitor shows camera view without annotations.
+        //builder.setAutoStopLiveView(false);
+
+        // Set and enable the processor.
+        builder.addProcessor(tfod);
+
+        // Build the Vision Portal, using the above settings.
+        visionPortal = builder.build();
+
+        // Set confidence threshold for TFOD recognitions, at any time.
+        //tfod.setMinResultConfidence(0.75f);
+
+        // Disable or re-enable the TFOD processor at any time.
+        //visionPortal.setProcessorEnabled(tfod, true);
+
+        while (runtime.seconds() < 20){
+            telemetryTfod();
+        }
+
+    }   // end method initTfod()
+
+    public boolean object = false;
+    public void telemetryTfod() {
+
+        List<Recognition> currentRecognitions = tfod.getRecognitions();
+        telemetry.addData("# Objects Detected", currentRecognitions.size());
+
+        // Step through the list of recognitions and display info for each one.
+        for (Recognition recognition : currentRecognitions) {
+            double x = (recognition.getLeft() + recognition.getRight()) / 2 ;
+            double y = (recognition.getTop()  + recognition.getBottom()) / 2 ;
+
+            telemetry.addData(""," ");
+            telemetry.addData("Image", "%s (%.0f %% Conf.)", recognition.getLabel(), recognition.getConfidence() * 100);
+            telemetry.addData("- Position x / y: ", "%.0f / %.0f", x, y);
+            telemetry.addData("- Size", "%.0f x %.0f", recognition.getWidth(), recognition.getHeight());
+            telemetry.update();
+
+            xPosition_red = recognition.getLeft() + recognition.getRight()/ 2;
+            yPosition_red  = recognition.getTop()  + recognition.getBottom()/ 2;
+
+
+            //left
+            if (Math.abs(xPosition_red ) > 975){
+                left_middle_right_red  = 1;
+                visionPortal.stopStreaming();
+            } else if (xPosition_red  < 888) {
+                left_middle_right_red  = 3;
+                visionPortal.stopStreaming();
+            } else {
+                left_middle_right_red  = 2;
+                visionPortal.stopStreaming();
+            }
+
+
+        }
+        if (currentRecognitions.size() == 0){
+           object = false;
+        }else {
+            object = true;
+        }
+
+    }   // end method telemetryTfod()
+
+    public void turnToGyroPower(double degrees,double power){
+
+        Imu.resetYaw();
+
+        double error = degrees + Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+        // PID_turn pid_turn = new PID_turn(error,5,4,0);
+
+        PID pid = new PID(.5,.2,0,0,0);
+
+
+
+        if (degrees > 0) {
+            while (Math.abs(error) > 15) {
+                double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+
+                double ticks_per_cm = 537.6 / 9.6;
+
+                double wantedPose = ticks_per_cm*degrees;
+
+                DriveFrontLeft.setPower(-power);
+                DriveFrontRight.setPower(power);
+
+                DriveBackRight.setPower(power);
+                DriveBackLeft.setPower(-power);
+                error = degrees - botAngle;
+
+            }
+            DriveFrontLeft.setPower(0);
+            DriveFrontRight.setPower(0);
+            DriveBackRight.setPower(0);
+            DriveBackLeft.setPower(0);
+        }
+        else if (degrees < 0) {
+            while (error < -15) {
+                double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
+
+
+                DriveFrontLeft.setPower(power);
+                DriveFrontRight.setPower(-power);
+
+                DriveBackRight.setPower(-power);
+                DriveBackLeft.setPower(power);
+                error = degrees + botAngle;
+
+            }
+            DriveFrontLeft.setPower(0);
+            DriveFrontRight.setPower(0);
+            DriveBackRight.setPower(0);
+            DriveBackLeft.setPower(0);
+
+        }
+
+    }
+
+
+    public void servo_R(double seconds, double power){
+        runtime.reset();
+
+        while (seconds > runtime.seconds()){
+            RightServo.setPower(power);
+        }RightServo.setPower(0);
+    }
+
+    public void servo_L(double seconds, double power){
+        runtime.reset();
+
+        while (seconds > runtime.seconds()){
+            LeftServo.setPower(power);
+        }LeftServo.setPower(0);
     }
 
 }

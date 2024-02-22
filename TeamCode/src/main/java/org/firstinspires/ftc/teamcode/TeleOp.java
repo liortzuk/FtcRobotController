@@ -1,21 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
-import android.transition.Slide;
-
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Config
-@TeleOp
-public class TestTeleOp extends OpMode {
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp
+public class TeleOp extends OpMode {
 
 
     @Override
@@ -41,17 +33,22 @@ public class TestTeleOp extends OpMode {
             Roni(forward, drift, turn, botHeading);
 
             //lift power
-            positionWanted += -gamepad2.left_stick_y * 100;
+            positionWanted += -gamepad2.left_stick_y * 50;
 
             if (positionWanted >= 2400){
                 positionWanted = 2400;
-            }else  if (positionWanted <= 0){
-                positionWanted = 0;
+            }else  if (positionWanted <= -10){
+                positionWanted = -10;
             }
 
-            pid.setWanted(positionWanted);
-            armR.setPower(pid.update(armL.getCurrentPosition()));
-            armL.setPower(pid.update(armL.getCurrentPosition()));
+            if (Math.abs(-gamepad2.left_stick_y) > 0.2){
+                armR.setPower(-gamepad2.left_stick_y);
+                armL.setPower(-gamepad2.left_stick_y);
+            }else {
+                armR.setPower(0);
+                armL.setPower(0);
+            }
+
 
 
 
@@ -59,22 +56,22 @@ public class TestTeleOp extends OpMode {
                 Imu.resetYaw();
             }
 
-
-            if(gamepad2.left_bumper){
-                RightServo.setPower(1);
+            if (gamepad1.x){
+                angle.setPosition(0.625);
+                trigger.setPosition(0);
 
             }
-            else if(gamepad2.right_bumper){
-                LeftServo.setPower(-1);
-            }else {
-                RightServo.setPower(0);
-                LeftServo.setPower(0);
+
+            if (gamepad1.b){
+                angle.setPosition(0.2);
+                angle.setPosition(0.5);
             }
+
+
 
             ///take in
             if(gamepad2.b){
                 intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                trigger.setPosition(0);
                 intake.setPower(1);
 
             }
@@ -82,61 +79,65 @@ public class TestTeleOp extends OpMode {
             else if(gamepad2.a){
                 intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 intake.setPower(-1);
-
-                angle.setPosition(0.625);
             }
             else {
                 intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 intake.setPower(0);
             }
 
-            if(gamepad2.left_trigger != 0){
-                AngleLift(0,-1);
-                ANGLE.setPower(0);
-            } else if (gamepad2.right_trigger != 0) {
+            if(gamepad2.left_bumper){
+                AngleLift(0,1);
+            }
+            else if(gamepad2.right_bumper){
                 AngleLift(800,-1);
-                ANGLE.setPower(0);
             }
 
-/*
-            if(gamepad2.left_trigger != 0 && ANGLE.getCurrentPosition() > -699){
-                    ANGLE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    ANGLE.setPower(-gamepad2.left_trigger);
-            } else if (gamepad2.right_trigger != 0 && ANGLE.getCurrentPosition() < 1100) {
-                    ANGLE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                    ANGLE.setPower(gamepad2.right_trigger);
+            if(gamepad2.left_trigger != 0 || gamepad2.right_trigger != 0) {
+                RightServo.setPower(gamepad2.left_trigger);
+                LeftServo.setPower(-gamepad2.right_trigger);
+            }else {
+                RightServo.setPower(0);
+                LeftServo.setPower(0);
             }
-            else {
-                ANGLE.setPower(0);
-            }
-
- */
 
             if (gamepad2.x){
                 RightServo.setPower(-1);
-                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
             if(gamepad2.y){
                 LeftServo.setPower(1);
             }
 
             if(gamepad2.dpad_up){
+                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
                 armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-                Elevator(727);
-
-                AngleLift(745,-1);
-                ANGLE.setPower(0);
-
-                Elevator(662);
-
-                IntakePower(1400,1);
-
-
                 armR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 armL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+                Elevator2(707);
+
+                AngleLift(665,-1);
+                ANGLE.setPower(0);
+
+                Elevator2(680);
+
+                IntakePower(2300,1);
+
+                Elevator2(1200);
+
+                AngleLift(800,-1);
+
+            }
+
+            if(gamepad2.dpad_right){
+                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                AngleLift(738,1);
+            }
+            if (gamepad1.dpad_left){
+                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             }
 
             telemetry.addData("Left Lift: ", armL.getCurrentPosition());
