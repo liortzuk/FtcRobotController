@@ -4,307 +4,173 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.teamcode.OpMode;
-import org.openftc.apriltag.AprilTagDetection;
-import org.openftc.easyopencv.OpenCvCamera;
-import org.openftc.easyopencv.OpenCvCameraRotation;
+import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
+import org.firstinspires.ftc.teamcode.Elevator.Elevator;
 
 @Autonomous
 public class Twitter_blue extends OpMode {
 
     @Override
     protected void run() {
+        DriveTrain driveTrain = new DriveTrain(DriveBackLeft, DriveBackRight, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
+        Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle, telemetry);
         runtime.reset();
 
         if (left_middle_right_blue == 2){
-            driveTo(4);
+            driveTrain.driveTo(4);
             sleep(5);
 
-            turnToGyro(180);
-            Ching_chung();
+            driveTrain.turnToGyro(180);
+            elevator.Ching_chung();
             sleep(5);
 
-            driveTo(-9);
+            driveTrain.driveTo(-9);
             sleep(5);
 
             intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            IntakePower(500,1);
+            elevator.IntakePower(500,1);
             sleep(5);
 
-            AngleLift2(800,-1);
+            elevator.AngleLift(800,-1);
             sleep(5);
 
-            driveTo(4);
+            driveTrain.driveTo(4);
             sleep(5);
 
-            turnToGyro(-87);
+            driveTrain.turnToGyro(-87);
             sleep(1000);
 
-            driveTo(-16);
+            driveTrain.driveTo(-16);
             sleep(5);
 
-            SideWalk(-20);
+            driveTrain.SideWalk(-20);
             sleep(200);
 
-            turnToGyro(-17);
+            driveTrain.turnToGyro(-17);
             sleep(5);
 
-            driveTo(-8);
+            driveTrain.driveTo(-8);
             sleep(200);
 
-            servo_R(1,1);
+            elevator.servo_R(1,1);
             sleep(1000);
-            Elevator(1400);
+            elevator.Elevator(1400);
             sleep(2);
 
-            driveTo(4);
+            driveTrain.driveTo(4);
             sleep(200);
 
-            turnToGyro(90);
+            driveTrain.turnToGyro(90);
             sleep(5);
             ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            AngleLift2(-702,1);
+            elevator.AngleLift(-702,1);
 
             sleep(5);
-            Elevator(10);
+            elevator.Elevator(10);
             sleep(5);
 
 
         }
         else if (left_middle_right_blue  == 3){
-            driveTo(15);
+            driveTrain.driveTo(15);
             sleep(5);
 
-            turnToGyro(-90);
-            Ching_chung();
+            driveTrain.turnToGyro(-90);
+            elevator.Ching_chung();
             sleep(5);
-            driveTo(-3);
+            driveTrain.driveTo(-3);
 
             intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            IntakePower(500,1);
+            elevator.IntakePower(500,1);
             sleep(5);
-            driveTo(3);
+            driveTrain.driveTo(3);
             sleep(5);
-            SideWalk(5);
-            sleep(5);
-
-            AngleLift2(800,-1);
+            driveTrain.SideWalk(5);
             sleep(5);
 
-            driveTo(1);
+            elevator.AngleLift(800,-1);
             sleep(5);
 
-            turnToGyro(-180);
+            driveTrain.driveTo(1);
+            sleep(5);
+
+            driveTrain.turnToGyro(-180);
             sleep(200);
 
-            driveTo(-16);
+            driveTrain.driveTo(-16);
             sleep(5);
 
-            SideWalk(-6);
+            driveTrain.SideWalk(-6);
             sleep(100);
 
-            driveTo(-14);
+            driveTrain.driveTo(-14);
             sleep(2000);
 
-            servo_R(1,1);
+            elevator.servo_R(1,1);
             sleep(1000);
-            Elevator(1400);
+            elevator.Elevator(1400);
             sleep(2);
 
-            driveTo(4);
+            driveTrain.driveTo(4);
             sleep(2000);
 
-            turnToGyro(-90);
+            driveTrain.turnToGyro(-90);
             sleep(5);
             ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            AngleLift2(-702,1);
+            elevator.AngleLift(-702,1);
 
             sleep(5);
-            Elevator(10);
+            elevator.Elevator(10);
             sleep(5);
 
         }
         else if (left_middle_right_blue  == 1) {
-            driveTo(5);
+            driveTrain.driveTo(5);
             sleep(5);
 
-            turnToGyro(-90);
-            turnToGyro(-90);
-            turnToGyro(-50);
-            Ching_chung();
+            driveTrain.turnToGyro(-230);
+            elevator.Ching_chung();
             sleep(5);
 
             intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            IntakePower(500,1);
+            elevator.IntakePower(500,1);
             sleep(5);
 
-            AngleLift2(800,-1);
+            elevator.AngleLift(800,-1);
             sleep(5);
 
-            driveTo(1);
+            driveTrain.driveTo(1);
             sleep(200);
-            turnToGyro(-60);
-            sleep(200);
-
-            driveTo(-20);
-            sleep(200);
-            SideWalk(-6);
-            sleep(200);
-            driveTo(-5);
+            driveTrain.turnToGyro(-60);
             sleep(200);
 
-            servo_R(1,1);
+            driveTrain.driveTo(-20);
+            sleep(200);
+            driveTrain.SideWalk(-6);
+            sleep(200);
+            driveTrain.driveTo(-5);
+            sleep(200);
+
+            elevator.servo_R(1,1);
             sleep(1000);
-            Elevator(1400);
+            elevator.Elevator(1400);
             sleep(2);
 
-            turnToGyro(-90);
+            driveTrain.turnToGyro(-90);
             sleep(5);
             ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            AngleLift2(-702,1);
+            elevator.AngleLift(-702,1);
 
             sleep(5);
-            Elevator(10);
+            elevator.Elevator(10);
             sleep(5);
 
         }
 
-
-
     }
-
 
     @Override
     protected void end() {
 
     }
-
-    public void Find(){
-
-        AprilTagDetection tagOfInterest = null;
-
-        camera.setPipeline(aprilTagDetectionPipeline);
-        camera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener()
-        {
-            @Override
-            public void onOpened()
-            {
-                //camera.startStreaming(800,448, OpenCvCameraRotation.UPRIGHT);
-                camera.startStreaming(1920,1080, OpenCvCameraRotation.UPRIGHT);
-            }
-
-            @Override
-            public void onError(int errorCode)
-            {
-
-            }
-        });
-
-        telemetry.setMsTransmissionInterval(50);
-
-        while (opModeIsActive()){
-
-            if(tagOfInterest == null || X_Value < 2) {
-                // drivetrain.moveTo(10);
-            }
-
-            telemetry.addData("X_Value: ",X_Value);
-            telemetry.update();
-
-        }
-
-    }
-
-    public void Ching_chung(){
-
-        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        AngleLift2(-738,1);
-        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        IntakePower(-500,1);
-
-        Elevator(727);
-
-        AngleLift2(685,-1);
-        ANGLE.setPower(0);
-
-        Elevator(722);
-
-        IntakePower(2000,1);
-        servo_L(2,-1);
-
-        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        IntakePower(-350,-1);
-
-        Elevator(1250);
-
-        AngleLift2(-702, 1);
-
-        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-    }
-
-    public void servo_R(double seconds, double power){
-        runtime.reset();
-
-        while (seconds > runtime.seconds()){
-            RightServo.setPower(power);
-        }RightServo.setPower(0);
-    }
-
-    public void servo_L(double seconds, double power){
-        runtime.reset();
-
-        while (seconds > runtime.seconds()){
-            LeftServo.setPower(power);
-        }LeftServo.setPower(0);
-    }
-
-    public void AngleLift2(int position, double power){
-        int wanted_position = position + ANGLE.getCurrentPosition();
-
-        ANGLE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ANGLE.setTargetPosition(wanted_position);
-        ANGLE.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        while (opModeIsActive() && ANGLE.isBusy()){
-            ANGLE.setPower(power);
-            idle();
-        }
-        ANGLE.setPower(0);
-
-    }
-
-    public void AngleReset(double power) {
-
-        int wanted_position = -1 * ANGLE.getCurrentPosition();
-
-        ANGLE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        ANGLE.setTargetPosition(wanted_position);
-        ANGLE.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        while (opModeIsActive() && ANGLE.isBusy()) {
-            ANGLE.setPower(power);
-            idle();
-        }
-        ANGLE.setPower(0);
-
-    }
-
-    public void fix(){
-        while (opModeIsActive()){
-            double ticks_per_cm = 537.6 / 4;
-
-            ticks_per_cm = ticks_per_cm * ANGLE.getCurrentPosition();
-
-            double wanted_position = Math.cos(ticks_per_cm / 6);
-            telemetry.addData("Say", "Hello Drive");
-            telemetry.addData(" ticks_per_cm: ", ticks_per_cm);
-            telemetry.addData("wantedPose: ", wanted_position);
-            telemetry.update();
-        }
-    }
-
 }

@@ -3,7 +3,10 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;import static java.lang.Math.abs;
+import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
+
+import org.firstinspires.ftc.teamcode.Elevator.Elevator;
 
 @Config
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp
@@ -17,7 +20,8 @@ public class TeleOp extends OpMode {
 
     @Override
     public void run(){
-
+         Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle, telemetry);
+         DriveTrain driveTrain = new DriveTrain(DriveBackLeft, DriveBackRight, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
          double positionWanted = 0;
          PID pid = new PID(0.01, 0, 0, 0, 0);
 
@@ -29,17 +33,7 @@ public class TeleOp extends OpMode {
             double botHeading = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
             double botAngle = Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
 
-            //Arava(forward, drift, turn);
-            Roni(forward, drift, turn, botHeading);
-
-            //lift power
-            positionWanted += -gamepad2.left_stick_y * 50;
-
-            if (positionWanted >= 2400){
-                positionWanted = 2400;
-            }else  if (positionWanted <= -10){
-                positionWanted = -10;
-            }
+            driveTrain.Roni(forward, drift, turn, botHeading);
 
             if (Math.abs(-gamepad2.left_stick_y) > 0.2){
                 armR.setPower(-gamepad2.left_stick_y);
@@ -48,9 +42,6 @@ public class TeleOp extends OpMode {
                 armR.setPower(0);
                 armL.setPower(0);
             }
-
-
-
 
             if (gamepad1.options) {
                 Imu.resetYaw();
@@ -86,10 +77,10 @@ public class TeleOp extends OpMode {
             }
 
             if(gamepad2.left_bumper){
-                AngleLift(0,1);
+                elevator.AngleLift(0,1);
             }
             else if(gamepad2.right_bumper){
-                AngleLift(800,-1);
+                elevator.AngleLift(800,-1);
             }
 
             if(gamepad2.left_trigger != 0 || gamepad2.right_trigger != 0) {
@@ -117,44 +108,38 @@ public class TeleOp extends OpMode {
                 armR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 armL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-                Elevator2(707);
+                elevator.Elevator(707);
 
-                AngleLift(665,-1);
+                elevator.AngleLift(665,-1);
                 ANGLE.setPower(0);
 
-                Elevator2(680);
+                elevator.Elevator(680);
 
-                IntakePower(700,1);
+                elevator.IntakePower(700,1);
 
-                Elevator2(1300);
+                elevator.Elevator(1300);
 
-                AngleLift(800,-1);
+                elevator.AngleLift(800,-1);
 
+            }
+
+            if (gamepad2.dpad_down){
+                elevator.AngleLift(0,1);
+                elevator.Elevator(10);
             }
 
             if(gamepad2.dpad_right){
                 ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                AngleLift(738,1);
-            }
-            if (gamepad1.dpad_left){
-                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                elevator.AngleLift(738,1);
             }
 
             telemetry.addData("Left Lift: ", armL.getCurrentPosition());
             telemetry.addData("Right Lift: ", armR.getCurrentPosition());
             telemetry.addData("ANGLE: ", ANGLE.getCurrentPosition());
-            telemetry.addData("FL power: ", DriveFrontLeft.getPower());
-            telemetry.addData("BL power: ", DriveBackLeft.getPower());
-            telemetry.addData("FR power: ", DriveFrontRight.getPower());
-            telemetry.addData("BR power: ", DriveBackRight.getPower());
-            telemetry.addData("Wheels: ", intake.getCurrentPosition());
             telemetry.addData("Gyro: ", botAngle);
-            telemetry.addData("wanted: ", positionWanted);
-            telemetry.addData("power: ", armL.getPower());
             telemetry.update();
 
         }
-//hi
     }
     @Override
     protected void end() {
