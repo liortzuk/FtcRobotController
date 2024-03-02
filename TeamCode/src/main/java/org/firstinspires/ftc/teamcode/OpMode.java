@@ -321,8 +321,8 @@ public abstract class OpMode extends LinearOpMode {
 
         while (opModeIsActive()  && intake.isBusy()){
             intake.setPower(power);
-           // LeftServo.setPower(1);
-           // RightServo.setPower(-1);
+            LeftServo.setPower(.7);
+            RightServo.setPower(-.2);
 
         }
         LeftServo.setPower(0);

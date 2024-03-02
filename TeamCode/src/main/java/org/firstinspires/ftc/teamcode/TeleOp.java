@@ -124,9 +124,9 @@ public class TeleOp extends OpMode {
 
                 Elevator2(680);
 
-                IntakePower(2300,1);
+                IntakePower(700,1);
 
-                Elevator2(1200);
+                Elevator2(1300);
 
                 AngleLift(800,-1);
 

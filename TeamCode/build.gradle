@@ -38,5 +38,7 @@ dependencies {
     annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
     implementation 'org.openftc:apriltag:2.0.0'
     implementation 'com.acmerobotics.dashboard:dashboard:0.4.6'
+    implementation 'com.github.bumptech.glide:glide:4.12.0'
+
 
 }
