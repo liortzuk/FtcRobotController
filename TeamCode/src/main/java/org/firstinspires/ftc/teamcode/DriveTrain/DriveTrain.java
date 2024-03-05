@@ -65,7 +65,8 @@ public class DriveTrain {
 
         FL.setPower(frontLeftPower);
         BL.setPower(backLeftPower);
-        BR.setPower(frontRightPower);
+
+        FR.setPower(frontRightPower);
         BR.setPower(backRightPower);
 
     }
@@ -75,18 +76,17 @@ public class DriveTrain {
         Imu.resetYaw();
         double error = degrees + Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 
-        while (Math.abs(error) > 2) {
+        while (Math.abs(error) > 15) {
                 double botAngle = Math.abs(Imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES));
 
-               // double ticks_per_cm = 537.6 / 9.6;
-                double wantedPose = COUNTS_PER_CM * degrees;
+                double wantedPose = (degrees * COUNTS_PER_CM) / 14;
                 PID pid = new PID(0.5,0.2,0.1,0,0);
                 pid.setWanted(wantedPose);
-                FL.setPower(pid.update(FL.getCurrentPosition()));
-                FR.setPower(pid.update(FR.getCurrentPosition()));
+                FL.setPower(-pid.update(FL.getCurrentPosition()));
+                FR.setPower(pid.update(FL.getCurrentPosition()));
 
-                BR.setPower(pid.update(BR.getCurrentPosition()));
-                BL.setPower(pid.update(BL.getCurrentPosition()));
+                BR.setPower(pid.update(FL.getCurrentPosition()));
+                BL.setPower(-pid.update(FL.getCurrentPosition()));
                 error = degrees - botAngle;
 
             }
@@ -114,7 +114,7 @@ public class DriveTrain {
         double positionWanted = 0;
         PID pid = new PID(0.5, 0.2, 0.1, 0, 0);
 
-        positionWanted = cm * COUNTS_PER_CM;
+        positionWanted = (cm * COUNTS_PER_CM) / 14;
         pid.setWanted((int)positionWanted);
 
         while (Math.abs(positionWanted)> Math.abs(FL.getCurrentPosition()) + 2){
@@ -151,7 +151,7 @@ public class DriveTrain {
         double positionWanted = 0;
         PID pid = new PID(0.5, 0.2, 0.1, 0, 0);
 
-        positionWanted = cm * COUNTS_PER_CM;
+        positionWanted = (cm * COUNTS_PER_CM) / 14;
         pid.setWanted((int)positionWanted);
 
         while (Math.abs(positionWanted) > Math.abs(FL.getCurrentPosition())){

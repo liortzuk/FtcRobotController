@@ -10,10 +10,10 @@ import org.firstinspires.ftc.teamcode.Elevator.Elevator;
 @Autonomous
 public class Twitter_blue extends OpMode {
 
+    Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle);
     @Override
     protected void run() {
-        DriveTrain driveTrain = new DriveTrain(DriveBackLeft, DriveBackRight, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
-        Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle, telemetry);
+        DriveTrain driveTrain = new DriveTrain(DriveBackRight, DriveBackLeft, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
         runtime.reset();
 
         if (left_middle_right_blue == 2){
@@ -54,7 +54,7 @@ public class Twitter_blue extends OpMode {
 
             elevator.servo_R(1,1);
             sleep(1000);
-            elevator.Elevator(1400);
+            elevator.Elevator_function(1400);
             sleep(2);
 
             driveTrain.driveTo(4);
@@ -66,7 +66,7 @@ public class Twitter_blue extends OpMode {
             elevator.AngleLift(-702,1);
 
             sleep(5);
-            elevator.Elevator(10);
+            elevator.Elevator_function(10);
             sleep(5);
 
 
@@ -108,7 +108,7 @@ public class Twitter_blue extends OpMode {
 
             elevator.servo_R(1,1);
             sleep(1000);
-            elevator.Elevator(1400);
+            elevator.Elevator_function(1400);
             sleep(2);
 
             driveTrain.driveTo(4);
@@ -120,7 +120,7 @@ public class Twitter_blue extends OpMode {
             elevator.AngleLift(-702,1);
 
             sleep(5);
-            elevator.Elevator(10);
+            elevator.Elevator_function(10);
             sleep(5);
 
         }
@@ -153,7 +153,7 @@ public class Twitter_blue extends OpMode {
 
             elevator.servo_R(1,1);
             sleep(1000);
-            elevator.Elevator(1400);
+            elevator.Elevator_function(1400);
             sleep(2);
 
             driveTrain.turnToGyro(-90);
@@ -162,7 +162,7 @@ public class Twitter_blue extends OpMode {
             elevator.AngleLift(-702,1);
 
             sleep(5);
-            elevator.Elevator(10);
+            elevator.Elevator_function(10);
             sleep(5);
 
         }
@@ -173,4 +173,5 @@ public class Twitter_blue extends OpMode {
     protected void end() {
 
     }
+
 }

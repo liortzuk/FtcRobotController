@@ -7,11 +7,6 @@ import org.firstinspires.ftc.teamcode.OpMode;
 public class test extends OpMode {
     @Override
     protected void run() {
-        telemetryTfod();
-        while (object == false){
-            turnToGyroPower(90,0.1);
-            initTfod();
-        }
     }
 
     @Override

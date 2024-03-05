@@ -1,5 +1,4 @@
 package org.firstinspires.ftc.teamcode.AI;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -144,15 +143,20 @@ public class Arava {
     }
 
     // Calculate accuracy
-    public double calculateAccuracy(double predictedValue, double actualValue) {
+    public static double calculateAccuracy(double predictedValue, double actualValue) {
         return Math.abs(predictedValue - actualValue) / actualValue;
     }
 
     public static void main(String[] args) throws IOException {
         Arava ai = new Arava();
+        System.setProperty("java.library.path", "path/to/opencv/native/libraries");
+        // Load the library
+        System.loadLibrary("opencv_java470");
 
         // Example image file names
-        String[] imageFileNames = {"image1.jpg", "image2.jpg", "image3.jpg"};
+        String[] imageFileNames = {"blue_center.jpg", "blue_center2.jpg", "blue_center3.jpg", "blue_left.jpg", "blue_left2.jpg", "blue_left3.jpg"
+        , "blue_right.jpg", "blue_right2.jpg", "blue_right3.jpg", "blue_right4.jpg", "blue_right5.jpg", "red_center.jpg", "red_center2.jpg", "red_center3.jpg"
+        , "red_left.jpg", "red_left2.jpg", "red_left3.jpg", "red_right.jpg", "red_right2.jpg", "red_right3.jpg"};
 
         // Process each image and add its flattened representation to the inputs array
         double[][] inputs = new double[imageFileNames.length][];
@@ -170,9 +174,10 @@ public class Arava {
         ai.train(inputs, labels, learningRate, epochs);
 
         // Test the network with a new image
-        String testImageFileName = "test_image.jpg";
+        String testImageFileName = "blue_right.jpg";
         double[] testImage = ai.processImage(testImageFileName);
         double output = ai.forwardPropagation(testImage);
         System.out.println("Predicted output: " + output);
+        System.out.println("Predicted accuracy: " + (100 - calculateAccuracy(output, 2.0)));
     }
 }

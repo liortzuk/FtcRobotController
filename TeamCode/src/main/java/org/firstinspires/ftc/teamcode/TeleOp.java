@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;import static java.lang.Math.abs;
 import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
@@ -20,13 +21,10 @@ public class TeleOp extends OpMode {
 
     @Override
     public void run(){
-         Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle, telemetry);
-         DriveTrain driveTrain = new DriveTrain(DriveBackLeft, DriveBackRight, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
-         double positionWanted = 0;
-         PID pid = new PID(0.01, 0, 0, 0, 0);
 
+        Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle);
         while (opModeIsActive()) {
-
+            DriveTrain driveTrain = new DriveTrain(DriveBackRight, DriveBackLeft, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
             double forward = -gamepad1.left_stick_y;//-1 to 1
             double turn = gamepad1.right_stick_x;
             double drift = gamepad1.left_stick_x;
@@ -99,38 +97,16 @@ public class TeleOp extends OpMode {
             }
 
             if(gamepad2.dpad_up){
-                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-                armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-                armR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                armL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-                elevator.Elevator(707);
-
-                elevator.AngleLift(665,-1);
-                ANGLE.setPower(0);
-
-                elevator.Elevator(680);
-
-                elevator.IntakePower(700,1);
-
-                elevator.Elevator(1300);
-
-                elevator.AngleLift(800,-1);
-
+                elevator.daria();
             }
 
             if (gamepad2.dpad_down){
-                elevator.AngleLift(0,1);
-                elevator.Elevator(10);
+                elevator.lihi();
             }
 
             if(gamepad2.dpad_right){
-                ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                elevator.AngleLift(738,1);
+                elevator.ResetAngle();
+                elevator.AngleLift(800,1);
             }
 
             telemetry.addData("Left Lift: ", armL.getCurrentPosition());

@@ -43,8 +43,6 @@ public abstract class OpMode extends LinearOpMode {
     private VisionPortal visionPortal;
 
     void initialize() {
-        Side side;
-
         DriveFrontLeft = hardwareMap.get(DcMotorEx.class, "FL");
         DriveFrontLeft.setDirection(DcMotor.Direction.FORWARD);
         DriveFrontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -120,10 +118,6 @@ public abstract class OpMode extends LinearOpMode {
         postInit();
 
         dashboard = FtcDashboard.getInstance();
-        DriveTrain driveTrain = new DriveTrain(DriveBackLeft, DriveBackRight, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
-        Elevator elavator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle, telemetry);
-
-
         if (opModeIsActive()) {
             run();
         }

@@ -6,18 +6,16 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.PID;
 
 public class Elevator {
 
     ElapsedTime runtime = new ElapsedTime();
-    private Servo trigger, angle;
-    private CRServo LeftServo, RightServo;
-    private Telemetry telemetry;
-    private DcMotorEx  armR, armL, intake, ANGLE;
+    private final Servo trigger, angle;
+    private final CRServo LeftServo, RightServo;
+    private final DcMotorEx  armR, armL, intake, ANGLE;
 
-    public Elevator(DcMotorEx armL, DcMotorEx armR, DcMotorEx intake, DcMotorEx ANGLE, CRServo leftServo, CRServo rightServo, Servo trigger, Servo angle, Telemetry telemetry) {
+    public Elevator(DcMotorEx armL, DcMotorEx armR, DcMotorEx intake, DcMotorEx ANGLE, CRServo leftServo, CRServo rightServo, Servo trigger, Servo angle) {
        this.armL = armL;
        this.armR = armR;
        this.intake = intake;
@@ -26,22 +24,31 @@ public class Elevator {
        this.RightServo = rightServo;
        this.trigger = trigger;
        this.angle = angle;
-       this.telemetry = telemetry;
     }
 
-
-    public void Elevator(double position){
-
-        double positionWanted = position;
+     public void Elevator_function(int position){
         PID pid = new PID(0.01, 0, 0, 0, 0);
-            while (Math.abs(position) != Math.abs(armL.getCurrentPosition())) {
+
+            while (Math.abs(position) > Math.abs(armL.getCurrentPosition())) {
                 pid.setWanted(position);
                 armR.setPower(pid.update(armL.getCurrentPosition()));
                 armL.setPower(pid.update(armL.getCurrentPosition()));
             }
-            armR.setPower(0);
-            armL.setPower(0);
+           armR.setPower(0);
+           armL.setPower(0);
         }
+
+    public void Elevator_function_down(int position){
+        PID pid = new PID(0.01, 0, 0, 0, 0);
+
+        while (Math.abs(position) < Math.abs(armL.getCurrentPosition())) {
+            pid.setWanted(position);
+            armR.setPower(pid.update(armL.getCurrentPosition()));
+            armL.setPower(pid.update(armL.getCurrentPosition()));
+        }
+        armR.setPower(0);
+        armL.setPower(0);
+    }
 
     public void AngleLift(int position, double power){
         ANGLE.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -67,9 +74,6 @@ public class Elevator {
 
         while (intake.isBusy()){
             intake.setPower(power);
-            LeftServo.setPower(.7);
-            RightServo.setPower(-.2);
-
         }
         LeftServo.setPower(0);
         RightServo.setPower(0);
@@ -93,37 +97,78 @@ public class Elevator {
         }LeftServo.setPower(0);
     }
 
-    public void Ching_chung(){
-
-        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        AngleLift(-738,1);
-        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        IntakePower(-500,1);
-
-        Elevator(727);
-
-        AngleLift(685,-1);
-        ANGLE.setPower(0);
-
-        Elevator(722);
-
-        IntakePower(2000,1);
-        servo_L(2,-1);
-
-        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        IntakePower(-350,-1);
-
-        Elevator(1300);
-
-        AngleLift(-702, 1);
-
+    public void ResetAngle(){
         ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
     }
 
+    public void reset_all(){
+        ANGLE.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        ANGLE.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        armR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+    }
+
+    public void Ching_chung() {
+        reset_all();
+
+        AngleLift(-790, 1);
+        IntakePower(-500, 1);
+
+        Elevator_function(750);
+        AngleLift(-65, 1);
+
+        IntakePower(1000, -1);
+        servo_R(1, -.15);
+
+        Elevator_function(690);
+
+        IntakePower(-500, 1);
+
+        IntakePower(-350, -1);
+        Elevator_function(1700);
+
+        AngleLift(-800, 1);
+        ResetAngle();
+      }
+
+      public void servo_left_and_right(double seconds, double power){
+          runtime.reset();
+
+          while (seconds > runtime.seconds()){
+              RightServo.setPower(-power / 4);
+              LeftServo.setPower(power);
+          }LeftServo.setPower(0);
+           RightServo.setPower(0);
+      }
+
+      public void daria(){
+          ResetAngle();
+          reset_all();
+
+          Elevator_function(750);
+
+          AngleLift(665,-1);
+
+          Elevator_function(690);
+
+          IntakePower(2500,1);
+          servo_left_and_right(0.25,1);
+          Elevator_function(1300);
+
+          AngleLift(800,-1);
+
+      }
+
+      public void lihi(){
+          AngleLift(0,1);
+          Elevator_function_down(10);
+      }
     }
 
