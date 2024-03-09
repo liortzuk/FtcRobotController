@@ -1,6 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
 import static java.lang.Math.abs;
+
+import android.graphics.Camera;
+
 import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
 import org.firstinspires.ftc.teamcode.Elevator.Elevator;
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -33,13 +36,11 @@ public abstract class OpMode extends LinearOpMode {
     protected BNO055IMU imu;
 
     protected IMU Imu;
+    public Camera Cam;
     FtcDashboard dashboard;
 
     private TfodProcessor tfod;
 
-    /**
-     * The variable to store our instance of the vision portal.
-     */
     private VisionPortal visionPortal;
 
     void initialize() {
@@ -132,8 +133,8 @@ public abstract class OpMode extends LinearOpMode {
 
     protected abstract void end();
 
-    public int left_middle_right_red = 2;
-    public int left_middle_right_blue = 2;
+    public int left_middle_right_red = 0;
+    public int left_middle_right_blue = 0;
 
     public double X_Value = 0;
     public OpenCvCamera camera;

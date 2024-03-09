@@ -17,7 +17,7 @@ apply from: '../build.dependencies.gradle'
 
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
-
+    compileSdkVersion 33
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }
@@ -35,10 +35,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.5.1'
 
     implementation project(':FtcRobotController')
-    annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
-    implementation 'org.openftc:apriltag:2.0.0'
+    //implementation 'org.openpnp:opencv:4.7.0-0'
+
     implementation 'com.acmerobotics.dashboard:dashboard:0.4.6'
     implementation 'com.github.bumptech.glide:glide:4.12.0'
+    implementation 'org.openftc:opencv-repackaged-bundled-dylibs:4.7.0-A'
 
 
 }

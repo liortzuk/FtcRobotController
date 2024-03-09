@@ -1,26 +1,40 @@
 package org.firstinspires.ftc.teamcode.Auto;
 
 
+import static org.firstinspires.ftc.vision.VisionPortal.easyCreateWithDefaults;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.teamcode.AI.Arava;
+import org.firstinspires.ftc.teamcode.AI.golda;
 import org.firstinspires.ftc.teamcode.OpMode;
 
 import com.acmerobotics.dashboard.config.Config;
 
 import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
 import org.firstinspires.ftc.teamcode.Elevator.Elevator;
+import org.opencv.core.Mat;
+import org.openftc.easyopencv.OpenCvCamera;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvWebcam;
 
 @Config
 @Autonomous
 public class Ido_red extends OpMode {
 
-
-
     @Override
     protected void run() {
         Elevator elevator = new Elevator(armL, armR, intake, ANGLE, LeftServo, RightServo, trigger, angle);
         DriveTrain driveTrain = new DriveTrain(DriveBackRight, DriveBackLeft, DriveFrontRight, DriveFrontLeft, telemetry, Imu);
+        Arava ai = new Arava();
+
+        runtime.reset();
+
+        while (runtime.seconds() < 10){
+            left_middle_right_red = ai.Run_the_AI();
+        }
 
         DriveFrontRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DriveFrontLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);

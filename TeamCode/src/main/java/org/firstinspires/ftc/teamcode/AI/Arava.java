@@ -1,55 +1,127 @@
 package org.firstinspires.ftc.teamcode.AI;
-import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import java.io.*;
-import java.util.*;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Random;
-import org.opencv.core.*;
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.hardwareMap;
+
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.opencv.imgcodecs.Imgcodecs;
 import org.opencv.imgproc.Imgproc;
-public class Arava {
+import static java.lang.Math.abs;
+
+import android.graphics.Camera;
+import android.hardware.camera2.CameraDevice;
+
+import org.firstinspires.ftc.teamcode.DriveTrain.DriveTrain;
+import org.firstinspires.ftc.teamcode.Elevator.Elevator;
+import com.acmerobotics.dashboard.FtcDashboard;
+
+
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.TouchSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.tfod.TfodProcessor;
+import org.openftc.easyopencv.OpenCvCamera;
+import java.io.*;
+import java.util.Random;
+
+
+// Java Program to take a Snapshot from System Camera
+// using OpenCV
+
+// Importing openCV modules
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+// This class is responsible for taking screenshot
+import org.opencv.core.Core;
+import org.opencv.core.Mat;
+import org.opencv.videoio.VideoCapture;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvCameraFactory;
+import org.openftc.easyopencv.OpenCvPipeline;
+
+
+public class Arava implements Serializable {
+
+    HardwareMap hardwareMap;
     private double[][] hiddenLayerWeights;
     private double[] hiddenLayerBiases;
     private double[] outputLayerWeights;
     private double outputLayerBias;
-    private double[] hiddenLayerActivations;
+    private double[] hiddenLayerActivations; // Added this field
 
+    private double bestAccuracy = Double.MIN_VALUE;
+    private double[][] bestHiddenLayerWeights;
+    private double[] bestHiddenLayerBiases;
+    private double[] bestOutputLayerWeights;
+    private double bestOutputLayerBias;
+
+    private double[][] training_data;
+    private double[] training_label;
+
+    private double[][] testing_data;
+    private double[] testing_labels;
+
+    private String[] imageFileNames = {
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_center.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_center2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_center3.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_left.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_left2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_left3.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_right.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_right2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_right3.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_right4.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_right5.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_center.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_center2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_center3.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_left.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_left2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_left3.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_right.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_right2.jpeg",
+            "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\red_right3.jpeg"
+    };
     public Arava() {
         Random random = new Random();
-        // Initialize weights and biases for the hidden layer
-        hiddenLayerWeights = new double[256][2]; // Adjust dimensions as needed
+        hiddenLayerWeights = new double[256][2];
         for (int i = 0; i < 256; i++) {
-            hiddenLayerWeights[i][0] = random.nextDouble();
-            hiddenLayerWeights[i][1] = random.nextDouble();
+            hiddenLayerWeights[i][0] = random.nextGaussian() * Math.sqrt(2.0 / 256);
+            hiddenLayerWeights[i][1] = random.nextGaussian() * Math.sqrt(2.0 / 256);
         }
         hiddenLayerBiases = new double[256];
         for (int i = 0; i < 256; i++) {
             hiddenLayerBiases[i] = 0;
         }
-        // Initialize weights and bias for the output layer
         outputLayerWeights = new double[256];
         for (int i = 0; i < 256; i++) {
-            outputLayerWeights[i] = random.nextDouble();
+            outputLayerWeights[i] = random.nextGaussian() * Math.sqrt(2.0 / 256);
         }
         outputLayerBias = 0;
     }
 
-    // Forward propagation with ReLU activation function
     public double forwardPropagation(double[] flattenedImage) {
-        // Calculate hidden layer activations
         hiddenLayerActivations = new double[256];
         for (int i = 0; i < 256; i++) {
             double z = 0;
             for (int j = 0; j < flattenedImage.length; j++) {
-                z += flattenedImage[j] * hiddenLayerWeights[i][j];
+                if (j < hiddenLayerWeights[i].length) {
+                    z += flattenedImage[j] * hiddenLayerWeights[i][j];
+                }
             }
             z += hiddenLayerBiases[i];
-            hiddenLayerActivations[i] = Math.max(0, z); // ReLU activation
+            hiddenLayerActivations[i] = Math.max(0, z);
         }
-        // Calculate output
         double output = 0;
         for (int i = 0; i < 256; i++) {
             output += hiddenLayerActivations[i] * outputLayerWeights[i];
@@ -58,126 +130,239 @@ public class Arava {
         return output;
     }
 
-    // Backpropagation with ReLU activation function
     public void backPropagation(double[] flattenedImage, double targetOutput, double learningRate) {
         double output = forwardPropagation(flattenedImage);
         double error = output - targetOutput;
-        // Update weights and biases for output layer
         for (int i = 0; i < 256; i++) {
-            outputLayerWeights[i] -= learningRate * error * hiddenLayerActivations[i];
+            if (i < hiddenLayerActivations.length) {
+                outputLayerWeights[i] -= learningRate * error * hiddenLayerActivations[i];
+            }
         }
         outputLayerBias -= learningRate * error;
-        // Calculate deltas for hidden layer neurons
         double[] hiddenLayerDeltas = new double[256];
         for (int i = 0; i < 256; i++) {
             hiddenLayerDeltas[i] = error * outputLayerWeights[i];
         }
-        // Update weights and biases for hidden layer
         for (int i = 0; i < 256; i++) {
-            double delta = hiddenLayerDeltas[i] * (hiddenLayerActivations[i] > 0 ? 1 : 0); // ReLU derivative
-            for (int j = 0; j < flattenedImage.length; j++) {
-                hiddenLayerWeights[i][j] -= learningRate * delta * flattenedImage[j];
+            if (i < hiddenLayerActivations.length) {
+                double delta = hiddenLayerDeltas[i] * (hiddenLayerActivations[i] > 0 ? 1 : 0);
+                for (int j = 0; j < flattenedImage.length; j++) {
+                    if (j < hiddenLayerWeights[i].length) {
+                        hiddenLayerWeights[i][j] -= learningRate * delta * flattenedImage[j];
+                    }
+                }
+                hiddenLayerBiases[i] -= learningRate * delta;
             }
-            hiddenLayerBiases[i] -= learningRate * delta;
         }
     }
 
-
-    // Training function
+    //training loop (gradiant decent)
     public void train(double[][] inputs, double[] labels, double learningRate, int epochs) {
+        int numSamples = inputs.length;
         for (int epoch = 0; epoch < epochs; epoch++) {
-            for (int i = 0; i < inputs.length; i++) {
-                backPropagation(inputs[i], labels[i], learningRate);
+            //shuffle(inputs, labels);
+            training_and_testing_data(inputs, labels);
+
+            for (int i = 0; i < numSamples; i++) {
+                backPropagation(training_data[i], training_label[i], learningRate);
+                double output = forwardPropagation(training_data[i]);
+                double totalAccuracy = 0;
+                for (int j = 0; j <= i; j++) {
+                    double accuracy = calculateAccuracy(output, training_label[j]);
+                    totalAccuracy += accuracy;
+                }
+                double averageAccuracy = totalAccuracy / (i + 1);
+                if (averageAccuracy > bestAccuracy) {
+                    bestAccuracy = averageAccuracy;
+                    bestHiddenLayerWeights = hiddenLayerWeights.clone();
+                    bestHiddenLayerBiases = hiddenLayerBiases.clone();
+                    bestOutputLayerWeights = outputLayerWeights.clone();
+                    bestOutputLayerBias = outputLayerBias;
+                }
+                System.out.println("Epoch " + (epoch + 1) + " - Image: " + imageFileNames[i] + " - Predicted Output: " + output + " - Accuracy: " + calculateAccuracy(output, labels[i]) + "%");
             }
+        }
+        System.out.println("best accuracy: " + bestAccuracy);
+        saveModel("C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\best_model.ser", bestHiddenLayerWeights, bestHiddenLayerBiases, bestOutputLayerWeights, bestOutputLayerBias);
+    }
+
+    public void training_and_testing_data(double[][] inputs, double[] labels){
+        training_data = new double[inputs.length][inputs.length];
+        training_label = new double[labels.length];
+        int count = 0;
+
+        for (int i = 0; i < inputs.length; i++){
+            training_data[i] = inputs[i];
+            training_label[i] = labels[i];
+            count ++;
+        }
+    }
+
+    private void shuffle(double[][] inputs, double[] labels) {
+        Random rnd = new Random();
+        for (int i = inputs.length - 1; i > 0; i--) {
+            int index = rnd.nextInt(i + 1);
+
+            // Swap inputs
+            double[] tempInput = inputs[index];
+            inputs[index] = inputs[i];
+            inputs[i] = tempInput;
+
+            // Swap labels
+            double tempLabel = labels[index];
+            labels[index] = labels[i];
+            labels[i] = tempLabel;
         }
     }
 
 
-    // Process image using OpenCV
     public double[] processImage(String fileName) throws IOException {
-        // Load OpenCV library
-        System.loadLibrary(Core.NATIVE_LIBRARY_NAME);
-
-        // Read the image using OpenCV
         Mat image = Imgcodecs.imread(fileName);
-
-        // Convert the image to grayscale
         Mat grayImage = new Mat();
         Imgproc.cvtColor(image, grayImage, Imgproc.COLOR_BGR2GRAY);
-
-        // Resize the image if needed (assuming the input image is already the desired size)
-        // Mat resizedImage = new Mat();
-        // Imgproc.resize(grayImage, resizedImage, new Size(desiredWidth, desiredHeight));
-
-        // Convert the image to a double array
         double[] flattenedImage = new double[grayImage.rows() * grayImage.cols()];
         int index = 0;
         for (int y = 0; y < grayImage.rows(); y++) {
             for (int x = 0; x < grayImage.cols(); x++) {
-                flattenedImage[index++] = grayImage.get(y, x)[0] / 255.0; // Normalize pixel value to range [0, 1]
+                flattenedImage[index++] = grayImage.get(y, x)[0] / 255.0;
             }
         }
-
-        // Return the processed image
         return flattenedImage;
     }
 
-    // Save the model to a file
-    public void saveModel(String filePath) throws IOException {
-        ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(filePath));
-        outputStream.writeObject(hiddenLayerWeights);
-        outputStream.writeObject(hiddenLayerBiases);
-        outputStream.writeObject(outputLayerWeights);
-        outputStream.writeObject(outputLayerBias);
-        outputStream.close();
+    public void loadModel(String filePath) {
+        try {
+            ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(filePath));
+            hiddenLayerWeights = (double[][]) inputStream.readObject();
+            hiddenLayerBiases = (double[]) inputStream.readObject();
+            outputLayerWeights = (double[]) inputStream.readObject();
+            outputLayerBias = (double) inputStream.readObject();
+            inputStream.close();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Error loading model: " + e.getMessage());
+        }
     }
 
-    // Load the model from a file
-    public void loadModel(String filePath) throws IOException, ClassNotFoundException {
-        ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(filePath));
-        hiddenLayerWeights = (double[][]) inputStream.readObject();
-        hiddenLayerBiases = (double[]) inputStream.readObject();
-        outputLayerWeights = (double[]) inputStream.readObject();
-        outputLayerBias = (double) inputStream.readObject();
-        inputStream.close();
+    public void saveModel(String filePath, double[][] hiddenLayerWeights, double[] hiddenLayerBiases, double[] outputLayerWeights, double outputLayerBias) {
+        try {
+            ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(filePath));
+            outputStream.writeObject(hiddenLayerWeights);
+            outputStream.writeObject(hiddenLayerBiases);
+            outputStream.writeObject(outputLayerWeights);
+            outputStream.writeObject(outputLayerBias);
+            outputStream.close();
+        } catch (IOException e) {
+            System.err.println("Error saving model: " + e.getMessage());
+        }
     }
 
-    // Calculate accuracy
     public static double calculateAccuracy(double predictedValue, double actualValue) {
-        return Math.abs(predictedValue - actualValue) / actualValue;
+        double absoluteError = Math.abs(predictedValue - actualValue);
+        return (1 - absoluteError / actualValue) * 100;
     }
+
+    public void checkImageFilesExist(String[] imageFileNames) {
+        for (String fileName : imageFileNames) {
+            File file = new File(fileName);
+            if (file.exists() && file.isFile()) {
+                System.out.println("Image file found: " + fileName);
+            } else {
+                System.out.println("Image file not found: " + fileName);
+            }
+        }
+    }
+
+    // Method to capture frame from the camera
+    Mat mat = new Mat();
+    public Mat inputFrame(Mat input) {
+        Imgproc.cvtColor(input, mat,  Imgproc.COLOR_BGR2GRAY);
+        return mat;
+    }
+
+    // Modify Run_the_AI method to use the captured frame for prediction
+    public int Run_the_AI() {
+        OpenCvCamera camera;
+        camera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "cum"), hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName()));
+        camera.startStreaming(1920, 1080);
+        examplePipeline examplePipeline = new examplePipeline();
+        camera.setPipeline(examplePipeline);
+
+        Mat frame = examplePipeline.mat;
+
+        if (frame != null) {
+            Mat grayFrame = new Mat();
+            Imgproc.cvtColor(frame, grayFrame, Imgproc.COLOR_BGR2GRAY);
+            double[] flattenedImage = new double[grayFrame.rows() * grayFrame.cols()];
+            int index = 0;
+            for (int y = 0; y < grayFrame.rows(); y++) {
+                for (int x = 0; x < grayFrame.cols(); x++) {
+                    flattenedImage[index++] = grayFrame.get(y, x)[0] / 255.0;
+                }
+            }
+            double output = forwardPropagation(flattenedImage);
+
+            if (output <= 1.5) {
+                output = 1.0;
+            } else if (output > 1.5 && output < 2.5) {
+                output = 2.0;
+            } else if (output >= 2.5) {
+                output = 3.0;
+            }
+
+            System.out.println("Predicted output: " + output);
+            return (int) output;
+        } else {
+            return 0; // Return -1 to indicate failure
+        }
+    }
+
+
 
     public static void main(String[] args) throws IOException {
         Arava ai = new Arava();
-        System.setProperty("java.library.path", "path/to/opencv/native/libraries");
-        // Load the library
-        System.loadLibrary("opencv_java470");
 
-        // Example image file names
-        String[] imageFileNames = {"blue_center.jpg", "blue_center2.jpg", "blue_center3.jpg", "blue_left.jpg", "blue_left2.jpg", "blue_left3.jpg"
-        , "blue_right.jpg", "blue_right2.jpg", "blue_right3.jpg", "blue_right4.jpg", "blue_right5.jpg", "red_center.jpg", "red_center2.jpg", "red_center3.jpg"
-        , "red_left.jpg", "red_left2.jpg", "red_left3.jpg", "red_right.jpg", "red_right2.jpg", "red_right3.jpg"};
+        // Check if image files exist
+        ai.checkImageFilesExist(ai.imageFileNames);
 
-        // Process each image and add its flattened representation to the inputs array
-        double[][] inputs = new double[imageFileNames.length][];
-        for (int i = 0; i < imageFileNames.length; i++) {
-            String fileName = imageFileNames[i];
+        // Process images using OpenCV
+        double[][] inputs = new double[ai.imageFileNames.length][];
+        for (int i = 0; i < ai.imageFileNames.length; i++) {
+            String fileName = ai.imageFileNames[i];
             inputs[i] = ai.processImage(fileName);
         }
 
-       // Example labels representing the position of the object in the image
-        double[] labels = {1.0, 2.0, 3.0}; // Assuming 1.0 for right, 2.0 for center, 3.0 for left
+        // Labels
+        double[] labels = {2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0, 3.0, 3.0, 1.0, 1.0, 1.0};
 
+        // Load the model if it exists
+        String modelFilePath = "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\best_model.ser";
+        File modelFile = new File(modelFilePath);
+        if (modelFile.exists()) {
+            ai.loadModel(modelFilePath);
+            System.out.println("Model loaded successfully.");
+        }
+
+        // Training
         double learningRate = 0.01;
-        int epochs = 1000;
-        // Train the network
-        ai.train(inputs, labels, learningRate, epochs);
+        int epochs = 100;
+        // ai.train(inputs, labels, learningRate, epochs);
 
         // Test the network with a new image
-        String testImageFileName = "blue_right.jpg";
+        String testImageFileName = "C:\\Users\\Saar Tzuk\\StudioProjects\\FtcRobotController\\TeamCode\\src\\main\\java\\org\\firstinspires\\ftc\\teamcode\\AI\\Images\\blue_center3.jpeg";
         double[] testImage = ai.processImage(testImageFileName);
         double output = ai.forwardPropagation(testImage);
+
+        if (output > 0.5 && output < 1.5) {
+            output = 1.0;
+        } else if (output > 1.5 && output < 2.5) {
+            output = 2.0;
+        } else if (output > 2.5) {
+            output = 3.0;
+        }
+
         System.out.println("Predicted output: " + output);
-        System.out.println("Predicted accuracy: " + (100 - calculateAccuracy(output, 2.0)));
+        System.out.println("Predicted accuracy: " + ai.calculateAccuracy(output, 2.0));
+
     }
 }
+
